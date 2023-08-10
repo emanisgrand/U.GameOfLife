@@ -1,0 +1,4 @@
+repository "U.GameOfLife@Bacano@cloud"
+  path "/"
+    br "/main"
+    co "/main"

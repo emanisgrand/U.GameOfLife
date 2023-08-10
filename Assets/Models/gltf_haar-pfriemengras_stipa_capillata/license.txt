@@ -1,0 +1,11 @@
+Model Information:
+* title:	Haar-Pfriemengras (Stipa capillata)
+* source:	https://sketchfab.com/3d-models/haar-pfriemengras-stipa-capillata-7b26e568f7f745da80513f9cfc258354
+* author:	Attila Dézsi (https://sketchfab.com/attila.dezsi)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Haar-Pfriemengras (Stipa capillata)" (https://sketchfab.com/3d-models/haar-pfriemengras-stipa-capillata-7b26e568f7f745da80513f9cfc258354) by Attila Dézsi (https://sketchfab.com/attila.dezsi) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
