@@ -1,4 +1,4 @@
 repository "U.GameOfLife@Bacano@cloud"
   path "/"
-    br "/main"
-    co "/main"
+    smartbranch "/main" changeset "4"    
+     
