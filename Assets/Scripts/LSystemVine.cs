@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -12,6 +13,7 @@ public class LSystemVine
         // Define rules. Here's one rule.
         // F means move forward; + and - are used for turns
         rules.Add('F', "F+F-F+F"); // Simple rule that replaces 'F' with "F+F-F+F"
+
     }
 
     public string GeneratePattern(int maxIterations){

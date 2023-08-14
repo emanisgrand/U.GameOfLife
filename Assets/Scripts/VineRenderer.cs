@@ -2,11 +2,19 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+enum VineState { Growing, Alive, Withering, Dead };
+
 public class VineRenderer : MonoBehaviour {
+    // Line Renderer properties & values
     [SerializeField] LineRenderer lineRenderer;
-    [SerializeField] float segmentLength = 1.0f;
-    [SerializeField] float angle = 25f; // angle for rotations in degrees
-    [SerializeField] float growthSpeed = 0.05f;
+		[SerializeField] float segmentLength = 1.0f;
+		[SerializeField] float angle = 25f; // angle for rotations in degrees
+		[SerializeField] float growthSpeed = 0.05f;
+
+		[SerializeField] Material witheringMat;
+    float currentLerpTime = 0.0f;
+    float witheringDuration = 5.0f;
+    
     struct TransformInfo{
         public Vector3 position;
         public float angle;
@@ -15,6 +23,24 @@ public class VineRenderer : MonoBehaviour {
             this.position = pos;
             this.angle = angle;
         }
+    }
+
+    /// <summary>
+    /// Call to start the withering effect.
+    /// </summary>
+    public IEnumerator WitherVineOverTime()
+    {
+        while(currentLerpTime < witheringDuration){
+            currentLerpTime += Time.deltaTime;
+            float lerpValue = currentLerpTime / witheringDuration;
+
+            witheringMat.SetFloat("_LerpValue", lerpValue);
+						
+            yield return null;
+				}
+        
+        // Ensure it's fully withered by the end.
+        witheringMat.SetFloat("_LerpValue", 1.0f);
     }
 
     public IEnumerator AnimateVineGrowth(string pattern){

@@ -10,12 +10,14 @@ public class GameManager : MonoBehaviour {
   [SerializeField] GameObject cellPrefab; 
 	[SerializeField] VineRenderer vineRenderer;
   [SerializeField] float simulationRate = 1f;
-  
+	[SerializeField] int maxVineIteration = 5;
+
+	Cell[,] cells;
+
 	LSystemVine vineGenerator = new LSystemVine();
   
 	int currentVineIteration = 0;
-	int maxVineIteration = 5;
-
+	
 	bool isVineGrowing = false;
 
 	public int width = 10;
@@ -24,7 +26,7 @@ public class GameManager : MonoBehaviour {
 	public UnityEvent onVineGrowthStart;
 	public UnityEvent onVineGrowthEnd;
 
-  Cell[,] cells;
+  
   float timeSinceLastUpdate = 0f;
 
 		private void Awake() {
@@ -45,7 +47,7 @@ public class GameManager : MonoBehaviour {
 		  onVineGrowthStart.AddListener(() => isVineGrowing = true);
 		  onVineGrowthEnd.AddListener(() => isVineGrowing = false);
 
-		  StartCoroutine(nameof(GameLoop));
+		  StartCoroutine(GameLoop());
 	  }
 
 		IEnumerator GameLoop() {
