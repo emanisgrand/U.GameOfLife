@@ -1,115 +1,198 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+using System;
+using System.Collections;using System.Collections.Generic;using UnityEngine;
 
-enum VineState { Growing, Alive, Withering, Dead };
+/// <summary>
+/// Enum representing the different states of a vine.
+/// </summary>
+public enum VineState { Growing, Alive, Withering, Dead };
 
+/// <summary>
+/// This class is responsible for rendering the vine object in the game.
+/// </summary>
 public class VineRenderer : MonoBehaviour {
-    // Line Renderer properties & values
-    [SerializeField] LineRenderer lineRenderer;
-		[SerializeField] float segmentLength = 1.0f;
-		[SerializeField] float angle = 25f; // angle for rotations in degrees
-		[SerializeField] float growthSpeed = 0.05f;
+		public VineState CurrentState = VineState.Dead;
 
-		[SerializeField] Material witheringMat;
-    float currentLerpTime = 0.0f;
-    float witheringDuration = 5.0f;
-    
-    struct TransformInfo{
-        public Vector3 position;
-        public float angle;
+		// Line Renderer properties & values
+		[SerializeField] LineRenderer lineRenderer;		[SerializeField] float segmentLength = 1.0f;		[SerializeField] float growthSpeed = 0.05f;
+		[SerializeField] float angle = 1f; // angle for rotations in degrees
 
-        public TransformInfo(Vector3 pos, float angle){
-            this.position = pos;
-            this.angle = angle;
-        }
-    }
+		/// <summary>
+		/// Struct to store a position and angle.
+		/// </summary>
+		/// <param name="pos">The position of the transform.</param>
+		/// <param name="angle">The angle of the transform.</param>
+		/// <returns>
+		/// A TransformInfo object containing the position and angle.
+		/// </returns>
+		struct TransformInfo {
+				public Vector3 position;
+				public float angle;
 
-    /// <summary>
-    /// Call to start the withering effect.
-    /// </summary>
-    public IEnumerator WitherVineOverTime()
-    {
-        while(currentLerpTime < witheringDuration){
-            currentLerpTime += Time.deltaTime;
-            float lerpValue = currentLerpTime / witheringDuration;
-
-            witheringMat.SetFloat("_LerpValue", lerpValue);
-						
-            yield return null;
+				/// <summary>
+				/// Constructor for TransformInfo class.
+				/// </summary>
+				/// <param name="pos">Position of the object.</param>
+				/// <param name="angle">Angle of the object.</param>
+				/// <returns>
+				/// A TransformInfo object.
+				/// </returns>
+				public TransformInfo(Vector3 pos, float angle) {
+						this.position = pos;
+						this.angle = angle;
 				}
-        
-        // Ensure it's fully withered by the end.
-        witheringMat.SetFloat("_LerpValue", 1.0f);
-    }
+		}
 
-    public IEnumerator AnimateVineGrowth(string pattern){
-        GameManager.instance.onVineGrowthStart?.Invoke();
+		public IEnumerator SimulateVine(string pattern, VineState newState){
+				if (newState == VineState.Growing){
+						CurrentState = VineState.Growing;
+						yield return AnimateVineGrowth(pattern);
+				} else if (newState == VineState.Withering){
+						CurrentState = VineState.Withering;
+						yield return ReverseGrowth(pattern);
+				}
+		}
 
-        for (int i=0; i <pattern.Length; i++){
-            RenderPattern(pattern, i);
-            yield return new WaitForSeconds(growthSpeed); // Adjust value for faster/slower growth
-        }
+		private IEnumerator ReverseGrowth(string pattern) {
+				for (int i=pattern.Length; i >= 0; i--){
+						ReverseRenderPattern(pattern, i);
+						yield return new WaitForSeconds(growthSpeed * 2);
+				}
+		}
 
-        GameManager.instance.onVineGrowthEnd?.Invoke();
-    }
+		public IEnumerator AnimateVineGrowth(string pattern) {
+				for (int i = 0; i < pattern.Length; i++) {
+						RenderPattern(pattern, i);
+						yield return new WaitForSeconds(growthSpeed); // Adjust value for faster/slower growth
+				}
+		}
 
-    public void RenderPattern(string pattern, int segmentIndex) {
-        Stack<TransformInfo> transformStack = new Stack<TransformInfo>();    
-        Vector3 currentPos = Vector3.zero;
-        float currentAngle = 0f;
+		private void ReverseRenderPattern(string pattern, int segmentIndex) {
+				if (segmentIndex < 0) {
+						return; // Skip rendering if segmentIndex is below zero.
+				}
 
-        List<Vector3> linePositions = new List<Vector3>();
-        linePositions.Add(currentPos);
+				Stack<TransformInfo> transformStack = new Stack<TransformInfo>();
+				Vector3 currentPos = Vector3.zero;
+				float currentAngle = 0f;
 
-        int currentSegment = 0;
-        foreach (char cmd in pattern) {
-            if (currentSegment > segmentIndex) {
-                break;
-            }
+				List<Vector3> linePositions = new List<Vector3>();
+				linePositions.Add(currentPos);
 
-            switch(cmd){
-                case 'F': 
-                    currentSegment++;
-                    // Move forward
-                    currentPos += new Vector3( 
-                    0, 
-                    segmentLength * Mathf.Sin(currentAngle * Mathf.Deg2Rad), 
-                    segmentLength * Mathf.Cos(currentAngle * Mathf.Deg2Rad));
-                    
-                    linePositions.Add(currentPos);
-                    
-                    break;
+				int currentSegment = 0;
 
-                case '+':
-                    // Turn right
-                    currentAngle += angle;
-                break;
+				foreach (char cmd in pattern){
+						if (currentSegment >= segmentIndex) {
+								break; // Skip rendering if segmentIndex is beyond pattern length
+						}
 
-                case '-':
-                    // Turn left
-                    currentAngle -= angle;
-                break;
+						switch(cmd){
+								// Reverse the commands to "undo" the growth pattern.
+								case 'F':
+										// Move backward										
+										currentPos -= new Vector3(
+ 										0, 
+										segmentLength * Mathf.Sin(currentAngle * Mathf.Deg2Rad),
+										-segmentLength * Mathf.Cos(currentAngle * Mathf.Deg2Rad)
+										);
 
-                case '[':
-                    // Save current transform
-                    transformStack.Push(new TransformInfo(currentPos, currentAngle));
-                break;
+										linePositions.Add(currentPos);
+										currentSegment--;
+										break;
+								
+								case '+':
+										// Turn left instead of right
+										currentAngle -= angle;
+										break;
 
-                case ']':
-                    // Restore last transform
-                    TransformInfo ti = transformStack.Pop();
-                    currentPos = ti.position;
-                    currentAngle = ti.angle;
-                    linePositions.Add(currentPos);
-                break;
+								case '-':
+										// Turn right instead of left
+										currentAngle += angle;
+										break;
+								case '[':
+										// Restore last transform 
+										TransformInfo ti = transformStack.Pop();
+										currentPos = ti.position;
+										currentAngle = ti.angle;
+										linePositions.Add(currentPos);
+										break;
 
-                default://Handle unexpected chars or do nothing.
-                        break;
-            }
-        }
+										case ']':
+										// Save current transform
+										transformStack.Push(new TransformInfo(currentPos, currentAngle));
+										break;
+								default: //Handle unexpected chars or do nothing.
+										break;
+						}
+				}
 
-        lineRenderer.positionCount = linePositions.Count;
-        lineRenderer.SetPositions(linePositions.ToArray());
-    }
-}
+				lineRenderer.positionCount = linePositions.Count;
+				lineRenderer.SetPositions(linePositions.ToArray());
+		}
+
+		/// <summary>
+		/// Renders a pattern based on a given string and segment index.
+		/// </summary>
+		/// <param name="pattern">The pattern to render.</param>
+		/// <param name="segmentIndex">The index of the segment to render.</param>
+		public void RenderPattern(string pattern, int segmentIndex) {
+				if (segmentIndex >= pattern.Length) {
+						return; // Skip rendering if segmentIndex is beyond pattern length
+				}
+
+				Stack<TransformInfo> transformStack = new Stack<TransformInfo>();
+				Vector3 currentPos = Vector3.zero;
+				float currentAngle = 0f;
+
+				List<Vector3> linePositions = new List<Vector3>();
+				linePositions.Add(currentPos);
+
+				int currentSegment = 0;
+
+				foreach (char cmd in pattern) {
+						if (currentSegment >= segmentIndex) {
+								return; // Skip rendering if segmentIndex is beyond pattern length
+						}
+
+						switch (cmd) {
+								case 'F':
+										currentSegment++;
+										// Move forward
+										currentPos += new Vector3(
+												0,
+												segmentLength * Mathf.Sin(currentAngle * Mathf.Deg2Rad),
+												-segmentLength * Mathf.Cos(currentAngle * Mathf.Deg2Rad));
+
+										linePositions.Add(currentPos);
+										break;
+
+								case '+':
+										// Turn right
+										currentAngle += angle;
+										break;
+
+								case '-':
+										// Turn left
+										currentAngle -= angle;
+										break;
+
+								case '[':
+										// Save current transform
+										transformStack.Push(new TransformInfo(currentPos, currentAngle));
+										break;
+
+								case ']':
+										// Restore last transform
+										TransformInfo ti = transformStack.Pop();
+										currentPos = ti.position;
+										currentAngle = ti.angle;
+										linePositions.Add(currentPos);
+										break;
+
+								default: //Handle unexpected chars or do nothing.
+										break;
+						}
+				}
+
+				lineRenderer.positionCount = linePositions.Count;
+				lineRenderer.SetPositions(linePositions.ToArray());
+		}}
